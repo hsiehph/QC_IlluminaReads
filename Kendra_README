@@ -1,0 +1,53 @@
+Clean up dataUses the Sickle program to check base quality in sliding windows, removing bases along 5' and 3' ends less than q20,then checks for the length of the remaining reads and filters any where either the read itself or its pair is less than 100 bp. Sickle is at GitHub: https://github.com/najoshi/sickle
+#qsub
+mkdir -p KamGGO_MhuPPA_HiSeq/trimmed_q20
+cd KamGGO_MhuPPA_HiSeq/trimmed_q20
+#!/bin/bash#$ -S /bin/bash#$ -cwd#$ -q eichler-short.q#$ -l mfree=20G#$ -l h_rt=24:00:00
+export PATH=$PATH:/net/eichler/vol26/home/kmiyamot/github/sickle
+sickle pe -t sanger -q 20 -l 100 \
+-f /net/eichler/vol25/projects/whole_genome_assembly/nobackups/reference_illumina/171215_D00584_0231_Bhn5j3bcxY/MhuPPA_S2_R1_001.fastq.gz \
+-r /net/eichler/vol25/projects/whole_genome_assembly/nobackups/reference_illumina/171215_D00584_0231_Bhn5j3bcxY/MhuPPA_S2_R2_001.fastq.gz \
+-o MhuPPA_trimmed_R1_q20.fq -p MhuPPA_trimmed_R2_q20.fq -s MhuPPA_singles_q20.fq
+sickle pe -t sanger -q 20 -l 100 \
+-f /net/eichler/vol25/projects/whole_genome_assembly/nobackups/reference_illumina/171215_D00584_0231_Bhn5j3bcxY/KamGGO_S1_R1_001.fastq.gz \
+-r /net/eichler/vol25/projects/whole_genome_assembly/nobackups/reference_illumina/171215_D00584_0231_Bhn5j3bcxY/KamGGO_S1_R2_001.fastq.gz \
+-o KamGGO_trimmed_R1_q20.fq -p KamGGO_trimmed_R2_q20.fq -s KamGGO_singles_q20.fq
+#Takes 1.5 hours
+#output:
+MhuPPA_singles_q20.fq
+MhuPPA_trimmed_R1_q20.fq
+MhuPPA_trimmed_R2_q20.fq
+KamGGO_singles_q20.fq
+KamGGO_trimmed_R1_q20.fq
+KamGGO_trimmed_R2_q20.fq
+Total input FastQ records: 296009690 (148004845 pairs)
+FastQ paired records kept: 230951586 (115475793 pairs)
+FastQ single records kept: 25771906 (from PE1: 16065788, from PE2: 9706118)
+FastQ paired records discarded: 13514292 (6757146 pairs)
+FastQ single records discarded: 25771906 (from PE1: 9706118, from PE2: 16065788)
+Check QC with FastQC
+#Run the FastQC program to check read lengths and quality distributions.
+mkdir -p fastqc #in the KamGGO_MhuPPA_HiSeq folder
+cd fastqc
+module load java/latest
+module load fastqc/latest
+fastqc ../trimmed_q20/MhuPPA_trimmed_R1_q20.fq ../trimmed_q20/MhuPPA_trimmed_R2_q20.fq ../trimmed_q20/MhuPPA_singles_q20.fq
+fastqc ../trimmed_q20/KamGGO_trimmed_R1_q20.fq ../trimmed_q20/KamGGO_trimmed_R2_q20.fq ../trimmed_q20/KamGGO_singles_q20.fq
+#takes 1.5 hours or so. Gives updates every 5%Adapter trimming
+#The FastQC often shows residual adapter sequence. This program will check for adapter sequence and trim that off, also removing any reads where the read or its pair is now less than 100 bp long. TrimGalore is a wrapper which adds the paired end checks to CutAdapt. https://github.com/FelixKrueger/TrimGalore
+cd ../mkdir -p adapt_cut #in the KamGGO_MhuPPA_HiSeq folder
+cd adapt_cut
+#!/bin/bash#$ -S /bin/bash#$ -cwd#$ -q eichler-short.q#$ -l mfree=20G#$ -l h_rt=24:00:00
+module load python/2.7.3
+module load cutadapt/latest
+module load fastqc/latest
+/net/eichler/vol26/home/kmiyamot/github/TrimGalore/trim_galore \
+--paired --retain_unpaired --length 100 --illumina \
+--stringency 5 --fastqc ../trimmed_q20/KamGGO_trimmed_R1_q20.fq ../trimmed_q20/KamGGO_trimmed_R2_q20.fq
+/net/eichler/vol26/home/kmiyamot/github/TrimGalore/trim_galore \
+--paired --retain_unpaired --length 100 --illumina \
+--stringency 5 --fastqc ../trimmed_q20/GM10539_trimmed_R1_q20.fq ../trimmed_q20/GM10539_trimmed_R2_q20.fq
+#takes 2-3 hours. Will pop up the prompt when done
+Now rename the output files so pilon can use them.
+mv trimmed_R1_q20_val_1.fq AsiaNLL_trimmed_q20_1.fq
+mv trimmed_R2_q20_val_2.fq AsiaNLL_trimmed_q20_2.fq

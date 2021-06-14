@@ -1,0 +1,16 @@
+PNG15 SP_A1_S1_L001 ../HiC_Eichler_SP_done/PGN15_A1_S1_L001_R1_001.fastq.gz
+PNG15 SP_A1_S1_L001 ../HiC_Eichler_SP_done/PGN15_A1_S1_L001_R2_001.fastq.gz
+PNG15 SP_A1_S1_L002 ../HiC_Eichler_SP_done/PGN15_A1_S1_L002_R1_001.fastq.gz
+PNG15 SP_A1_S1_L002 ../HiC_Eichler_SP_done/PGN15_A1_S1_L002_R2_001.fastq.gz
+PNG15 SP_A2_S2_L001 ../HiC_Eichler_SP_done/PGN15_A2_S2_L001_R1_001.fastq.gz
+PNG15 SP_A2_S2_L001 ../HiC_Eichler_SP_done/PGN15_A2_S2_L001_R2_001.fastq.gz
+PNG15 SP_A2_S2_L002 ../HiC_Eichler_SP_done/PGN15_A2_S2_L002_R1_001.fastq.gz
+PNG15 SP_A2_S2_L002 ../HiC_Eichler_SP_done/PGN15_A2_S2_L002_R2_001.fastq.gz
+PNG15 S1_A1_S1_L001 ../HiC_Eichler_S1_6plex_done/PGN15_A1_S1_L001_R1_001.fastq.gz
+PNG15 S1_A1_S1_L001 ../HiC_Eichler_S1_6plex_done/PGN15_A1_S1_L001_R2_001.fastq.gz
+PNG15 S1_A1_S1_L002 ../HiC_Eichler_S1_6plex_done/PGN15_A1_S1_L002_R1_001.fastq.gz
+PNG15 S1_A1_S1_L002 ../HiC_Eichler_S1_6plex_done/PGN15_A1_S1_L002_R2_001.fastq.gz
+PNG15 S1_A2_S2_L001 ../HiC_Eichler_S1_6plex_done/PGN15_A2_S2_L001_R1_001.fastq.gz
+PNG15 S1_A2_S2_L001 ../HiC_Eichler_S1_6plex_done/PGN15_A2_S2_L001_R2_001.fastq.gz
+PNG15 S1_A2_S2_L002 ../HiC_Eichler_S1_6plex_done/PGN15_A2_S2_L002_R1_001.fastq.gz
+PNG15 S1_A2_S2_L002 ../HiC_Eichler_S1_6plex_done/PGN15_A2_S2_L002_R2_001.fastq.gz

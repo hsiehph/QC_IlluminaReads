@@ -1,0 +1,10 @@
+
+
+for f in `ls ../HiC_Eichler_SP_done/PGN15_A*`;do x=`basename ${f} .fastq.gz`; echo ${x} | awk  -F_ -v ID="PNG15" -v ff="${f}" -v prefix="SP" '{print ID, prefix"_"$2"_"$3"_"$4, ff } '; done  > manifest.txt
+
+for f in `ls ../HiC_Eichler_S1_6plex_done/PGN15_A*`;do x=`basename ${f} .fastq.gz`; echo ${x} | awk  -F_ -v ID="PNG15" -v ff="${f}" -v prefix="S1" '{print ID, prefix"_"$2"_"$3"_"$4, ff } '; done  >> manifest.txt
+
+
+
+
+

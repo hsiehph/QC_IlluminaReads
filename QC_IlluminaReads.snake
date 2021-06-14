@@ -1,0 +1,95 @@
+import os 
+
+shell.prefix("source config.sh; set -eo pipefail ; ")
+
+configfile: "config.yaml"
+
+if not os.path.exists("log"):
+	os.makedirs("log")
+
+dict_sample_lane_readPair = {}
+list_sample_lane = []
+with open(config["manifest"]) as fin:
+	for line in fin:
+		line = line.strip().split()
+		sampleID = line[0]
+		laneID = line[1]
+		fread = line[2]
+		if sampleID not in dict_sample_lane_readPair:
+			dict_sample_lane_readPair[sampleID] = {}
+		if laneID not in dict_sample_lane_readPair[sampleID]:
+			dict_sample_lane_readPair[sampleID][laneID] = []
+		dict_sample_lane_readPair[sampleID][laneID].append(fread)
+		
+		if (sampleID, laneID) not in list_sample_lane:
+			list_sample_lane.append((sampleID, laneID))
+
+def get_all_output(wildcards):
+	all_output = []
+	ptn1 = "{sample}/adapt_cut/{sample}_{lane}_trimmed_q20_1.fq.gz"
+	ptn2 = "{sample}/adapt_cut/{sample}_{lane}_trimmed_q20_2.fq.gz"
+	for element in list_sample_lane:
+		all_output.append(ptn1.format(sample=element[0], lane=element[1]))
+		all_output.append(ptn2.format(sample=element[0], lane=element[1]))
+	return(all_output)
+
+
+rule dummy :
+	input: 
+			get_all_output
+
+
+# The FastQC often shows residual adapter sequence. 
+# This program will check for adapter sequence and trim that off, also removing any reads where the read or its pair is now less than 100 bp long. 
+# TrimGalore is a wrapper which adds the paired end checks to CutAdapt. https://github.com/FelixKrueger/TrimGalore
+rule adapt_cut:
+	input: "{sample}/trimmed_q20/{sample}_{lane}_trimmed_R1_q20.fq",
+			"{sample}/trimmed_q20/{sample}_{lane}_trimmed_R2_q20.fq",
+			"{sample}/trimmed_q20/{sample}_{lane}_trimmed_singles_q20.fq",
+	output: "{sample}/adapt_cut/{sample}_{lane}_trimmed_q20_1.fq.gz",
+			"{sample}/adapt_cut/{sample}_{lane}_trimmed_q20_2.fq.gz",
+	params: sge_opts="-l h_rt=48:00:00 -l mfree=2G -pe serial 9"
+	shell:
+			"""	
+				export PATH=$PATH://net/eichler/vol26/home/hsiehph/bin/TrimGalore-0.6.6 ;
+				trim_galore  --cores 2  --paired  --retain_unpaired  --length 100  --illumina  --gzip  --basename {wildcards.sample}_{wildcards.lane}  --o {wildcards.sample}/adapt_cut/  --stringency 5 --fastqc {input[0]} {input[1]} ; mv {wildcards.sample}/adapt_cut/{wildcards.sample}_{wildcards.lane}_R1_trimmed_R1_q20_val_1.fq.gz  {output[0]}; mv {wildcards.sample}/adapt_cut/{wildcards.sample}_{wildcards.lane}_R2_trimmed_R2_q20_val_2.fq.gz  {output[1]}
+
+			"""
+
+
+
+# Check QC with FastQC
+# Run the FastQC program to check read lengths and quality distributions.
+# It takes 1.5 hours or so. Gives updates every 5%Adapter trimming
+rule fastQC:
+	input: "{sample}/trimmed_q20/{sample}_{lane}_trimmed_R1_q20.fq",
+			"{sample}/trimmed_q20/{sample}_{lane}_trimmed_R2_q20.fq",
+			"{sample}/trimmed_q20/{sample}_{lane}_trimmed_singles_q20.fq",
+	output: "{sample}/fastqc/fastqc_report.html",
+	params: sge_opts="-l h_rt=48:00:00 -l mfree=2G -pe serial 4"
+	shell:
+			"""
+				fastqc  --threads 4 {input[0]}  {input[1]}  {input[2]} -o {wildcards.sample}/fastqc/
+			"""
+
+	
+
+# Clean up dataUses the Sickle program to check base quality in sliding windows, removing bases along 5' and 3' ends less than q20.
+# Then checks for the length of the remaining reads and filters any where either the read itself or its pair is less than 100 bp. 
+# Sickle is at GitHub: https://github.com/najoshi/sickle
+rule sickle:
+	input: lambda wc: dict_sample_lane_readPair[wc.sample][wc.lane]
+	output: "{sample}/trimmed_q20/{sample}_{lane}_trimmed_R1_q20.fq",
+			"{sample}/trimmed_q20/{sample}_{lane}_trimmed_R2_q20.fq",
+			"{sample}/trimmed_q20/{sample}_{lane}_trimmed_singles_q20.fq",
+	params: sge_opts="-l h_rt=48:00:00 -l mfree=20G "
+	shell:
+			"""
+				export PATH=$PATH:/net/eichler/vol26/home/kmiyamot/github/sickle ;
+				sickle pe -t sanger -q 20 -l 100 \
+					-f {input[0]}   -r {input[1]} \
+					-o {output[0]}  -p {output[1]} \
+					-s {output[2]}
+
+			"""
+
